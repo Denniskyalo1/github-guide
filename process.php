@@ -6,10 +6,11 @@ $username = "";
 $errors = array();
 
 // connect to the database
-$db = mysqli_connect('localhost', 'root', '', 'cafe');
+$db = mysqli_connect('localhost', 'group1user', 'kyalod316', 'GROUP1');
 
 // REGISTER USER
 if (isset($_POST['reg_user'])) {
+
     // receive all input values from the form
     $username = mysqli_real_escape_string($db, $_POST['username']);
     $password = mysqli_real_escape_string($db, $_POST['password']);
@@ -23,7 +24,7 @@ if (isset($_POST['reg_user'])) {
     }
 
     // first check the database to make sure a user does not already exist
-    $user_check_query = "SELECT * FROM user WHERE username='$username' LIMIT 1";
+    $user_check_query = "SELECT * FROM users WHERE username='$username' LIMIT 1";
     $result = mysqli_query($db, $user_check_query);
     $user = mysqli_fetch_assoc($result);
 
@@ -35,9 +36,9 @@ if (isset($_POST['reg_user'])) {
 
     // Finally, register user if there are no errors in the form
     if (count($errors) == 0) {
-        $password = md5($password); // encrypt the password before saving
+        $password = password_hash($password, PASSWORD_DEFAULT); // encrypt the password before saving
 
-        $query = "INSERT INTO user (username, password)
+        $query = "INSERT INTO users (username, password)
                   VALUES('$username', '$password')";
         mysqli_query($db, $query);
         $_SESSION['username'] = $username;
@@ -60,16 +61,21 @@ if (isset($_POST['login_user'])) {
     }
 
     if (count($errors) == 0) {
-        $password = md5($password);
-        $query = "SELECT * FROM user WHERE username='$username' AND password='$password'";
+        $query = "SELECT * FROM users WHERE username='$username'";
         $results = mysqli_query($db, $query);
         if (mysqli_num_rows($results) == 1) {
-            $_SESSION['username'] = $username;
-            $_SESSION['success'] = "You are now logged in.";
-            header('location: index.php');
-        } else {
-            array_push($errors, "Wrong username/password");
-        }
+		$user = mysqli_fetch_assoc($results);
+		if(password_verify($password, $user['password')){
+                  $_SESSION['username'] = $username;
+		  header('location: index.php');
+		  exit();
+		}else{
+		array_push($errors, "wrong username/password");
+		}
+
+	}else{
+	array_push($errors, "wrong username/password");
+	}
     }
 }
 ?>
